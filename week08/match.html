@@ -1,0 +1,98 @@
+<style>
+  div .classs+#id {
+    color: red;
+  }
+</style>
+<div>
+  <div class="classs">
+  </div>
+  <div id="id">
+    match
+  </div>
+</div>
+<script>
+  // 支持选择器组
+  // 简单选择器（不支持伪类伪元素）
+  // 复杂选择器
+  function match(selector, element) {
+    let selectors;
+    // 处理 selector group 认为只要匹配一个 那么 就能 match 通过
+    if (selector.includes(',')) {
+      selectors = selector.split(',')
+    } else {
+      selectors = [selector]
+    }
+    for (let perSelector of selectors) {
+      if (matchEle(perSelector, element)) return true;
+    }
+    return false
+  }
+  function matchEle(perSelector, element) {
+    // 处理 复杂选择器
+    let selectorParts = perSelector.split(' ').reverse();
+    // todo
+    if (!matchDetail(element, selectorParts[0])) return false;
+    let cur = 1;
+    while (cur < selectorParts.length) {
+      if (element === null) break;
+      if (selectorParts[cur] === '>') {
+        cur++;
+        let parentNode = element.parentNode;
+        if (!matchDetail(parentNode, selectorParts[cur])) {
+          return false
+        }
+        element = element.parentNode;
+        cur++
+      } else if (selectorParts[cur] === '+') {
+        cur++;
+        let previousElementSibling = element.previousElementSibling
+        if (!matchDetail(previousElementSibling, selectorParts[cur])) {
+          return false
+        };
+        element = element.previousElementSibling;
+        cur++
+      } else {
+        let parentNode = element.parentNode;
+        if (matchDetail(parentNode, selectorParts[cur])) {
+          cur++;
+        }
+        element = parentNode;
+      }
+    }
+    console.log(cur, selectorParts.length);
+    return cur >= selectorParts.length;
+  }
+  function matchSibling(element, selector) {
+    let nextElementSibling = element.nextElementSibling;
+    while (nextElementSibling !== null) {
+      if (matchDetail(nextElementSibling, selector)) break;
+      nextElementSibling = nextElementSibling.nextElementSibling;
+    }
+    return nextElementSibling === null ? false : true;
+  }
+  function matchDetail(element, selector) {
+    if (!element || !selector || element === document.documentElement.parentNode) {
+      return false;
+    }
+    // id
+    if (selector.charAt(0) == '#') {
+      let id = selector.replace('#', '')
+      if (id === element.getAttribute('id')) {
+        return true;
+      }
+    } else if (selector.charAt(0) == '.') {
+      let cls = selector.replace('.', '')
+      if (cls === element.getAttribute('class')) {
+        return true;
+      }
+    } else {
+      if (element.nodeName.toLocaleLowerCase() === selector) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // div> 
+  console.log(match("div .classs + #id", document.getElementById("id")));
+
+</script>
